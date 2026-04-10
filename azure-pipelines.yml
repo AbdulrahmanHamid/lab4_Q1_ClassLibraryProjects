@@ -1,0 +1,41 @@
+# ASP.NET Core
+# Build and test ASP.NET Core projects targeting .NET Core.
+# Add steps that run tests, create a NuGet package, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+trigger:
+- main
+
+pool:
+  name: 'comp-367-demo-self-host'
+
+variables:
+  buildConfiguration: 'Release'
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  VSTS_AGENT_DISABLE_TELEMETRY: true
+
+steps:
+- task: DotNetCoreCLI@2
+  displayName: 'Build the project'
+  inputs:
+    command: 'build'
+    projects: '**/*.csproj'
+    arguments: '--configuration $(buildConfiguration)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Pack the project into NuGet'
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/*.csproj'
+    versioningScheme: 'byPrereleaseNumber' 
+    majorVersion: '1'
+    minorVersion: '0'
+    patchVersion: '0'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Push NuGet to Azure Artifacts'
+  inputs:
+    command: 'push'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
+    nuGetFeedType: 'internal'
+    publishVstsFeed: 'StringExtensionsFeed' 
